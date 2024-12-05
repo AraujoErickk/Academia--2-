@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registros</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Roboto+Slab:wght@700&display=swap');
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Roboto Slab', serif; 
+        }
+
+        body {
+            background-color: #51519c;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            color: #333;
+        }
+
+        .container {
+            background-color: #6c63ff; 
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            max-width: 900px;
+            width: 100%;
+        }
+
+        h1 {
+            text-align: center;
+            color: #ffffff; 
+            margin-bottom: 20px;
+            font-size: 2rem;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+
+        th {
+            background-color: #5e4db5; 
+            color: white;
+        }
+
+        td {
+            background-color: #f9f9f9;
+        }
+
+        .edit-btn, .delete-btn {
+            border: none;
+            padding: 5px 10px;
+            font-size: 0.9rem;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+            color: white;
+        }
+
+        .delete-btn {
+            background-color: #dc3545;
+        }
+
+        .delete-btn:hover {
+            background-color: #c82333;
+        }
+
+        .edit-btn {
+            background-color: #ffc107;
+        }
+
+        .edit-btn:hover {
+            background-color: #e0a800;
+        }
+
+        .form-container {
+            display: none;
+            background-color: #6c63ff;
+            padding: 20px;
+            border-radius: 8px;
+            margin-top: 20px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        .form-container input {
+            width: calc(100% - 20px);
+            padding: 10px;
+            margin-bottom: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+
+        .form-buttons {
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .form-buttons button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            color: white;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        .save-btn {
+            background-color: #28a745;
+        }
+
+        .save-btn:hover {
+            background-color: #218838;
+        }
+
+        .cancel-btn {
+            background-color: #dc3545;
+        }
+
+        .cancel-btn:hover {
+            background-color: #c82333;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Registros de Cadastro</h1>
+
+        <table id="registrosTabela">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Nome</th>
+                    <th>E-mail</th>
+                    <th>Celular</th>
+                    <th>Gênero</th>
+                    <th>Data e Hora</th>
+                    <th>Ação</th>
+                </tr>
+            </thead>
+            <tbody>
+               
+            </tbody>
+        </table>
+
+        <p class="no-records" id="noRecordsMessage">Nenhum registro encontrado.</p>
+
+        <div class="form-container" id="editForm">
+            <h2 style="color: white; text-align: center;">Editar Registro</h2>
+            <input type="text" id="editNome" placeholder="Nome">
+            <input type="email" id="editEmail" placeholder="E-mail">
+            <input type="text" id="editCelular" placeholder="Celular">
+            <input type="text" id="editGenero" placeholder="Gênero">
+            <div class="form-buttons">
+                <button class="save-btn" onclick="salvarEdicao()">Salvar</button>
+                <button class="cancel-btn" onclick="fecharFormulario()">Cancelar</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let usuarioEditadoIndex = null;
+
+        window.onload = function() {
+            carregarRegistros();
+        };
+
+        function carregarRegistros() {
+            const usuarios = JSON.parse(localStorage.getItem("usuarios")) || [];
+            const registrosTabela = document.getElementById("registrosTabela").getElementsByTagName('tbody')[0];
+            const noRecordsMessage = document.getElementById("noRecordsMessage");
+
+            registrosTabela.innerHTML = '';
+
+            if (usuarios.length === 0) {
+                noRecordsMessage.style.display = 'block';
+                return;
+            }
+
+            noRecordsMessage.style.display = 'none';
+
+            usuarios.sort((a, b) => a.firstname.localeCompare(b.firstname));
+
+            usuarios.forEach((usuario, index) => {
+                const tr = document.createElement("tr");
+
+                const date = new Date(usuario.timestamp);
+                const formattedDate = `${date.toLocaleDateString('pt-BR')} às ${date.toLocaleTimeString('pt-BR')}`;
+
+                tr.innerHTML = `
+                    <td>${index + 1}</td>
+                    <td>${usuario.firstname} ${usuario.lastname}</td>
+                    <td>${usuario.email}</td>
+                    <td>${usuario.number}</td>
+                    <td>${usuario.gender}</td>
+                    <td>${formattedDate}</td>
+                    <td>
+                        <button class="edit-btn" onclick="editarUsuario(${index})">Editar</button>
+                        <button class="delete-btn" onclick="apagarUsuario(${index})">Apagar</button>
+                    </td>
+                `;
+                registrosTabela.appendChild(tr);
+            });
+        }
+
+        function editarUsuario(index) {
+            const usuarios = JSON.parse(localStorage.getItem("usuarios")) || [];
+            const usuario = usuarios[index];
+            usuarioEditadoIndex = index;
+
+            document.getElementById("editNome").value = `${usuario.firstname} ${usuario.lastname}`;
+            document.getElementById("editEmail").value = usuario.email;
+            document.getElementById("editCelular").value = usuario.number;
+            document.getElementById("editGenero").value = usuario.gender;
+
+            document.getElementById("editForm").style.display = "block";
+        }
+
+        function salvarEdicao() {
+            const usuarios = JSON.parse(localStorage.getItem("usuarios")) || [];
+            const [firstname, lastname] = document.getElementById("editNome").value.split(" ");
+            const email = document.getElementById("editEmail").value;
+            const celular = document.getElementById("editCelular").value;
+            const genero = document.getElementById("editGenero").value;
+
+            usuarios[usuarioEditadoIndex] = {
+                ...usuarios[usuarioEditadoIndex],
+                firstname: firstname || "",
+                lastname: lastname || "",
+                email: email,
+                number: celular,
+                gender: genero
+            };
+
+            localStorage.setItem("usuarios", JSON.stringify(usuarios));
+            fecharFormulario();
+            carregarRegistros();
+        }
+
+        function apagarUsuario(index) {
+            const usuarios = JSON.parse(localStorage.getItem("usuarios")) || [];
+            usuarios.splice(index, 1);
+            localStorage.setItem("usuarios", JSON.stringify(usuarios));
+            carregarRegistros();
+        }
+
+        function fecharFormulario() {
+            document.getElementById("editForm").style.display = "none";
+        }
+    </script>
+</body>
+</html>
